@@ -323,9 +323,9 @@ def send_to_api(result, git_info, api_url):
 
 def print_report(result, git_info):
     """Cetak laporan ke terminal dengan format yang jelas."""
-    sep = '─' * 60
+    sep = '-' * 60
     print(f"\n{sep}")
-    print("  BEBAS Code Scanner — Laporan Scan")
+    print("  BEBAS Code Scanner - Laporan Scan")
     print(sep)
     print(f"  Repository : {git_info.get('repository', '-')}")
     print(f"  Branch     : {git_info.get('branch', '-')}")
