@@ -8,13 +8,12 @@ use App\Http\Controllers\Api\Scan\DeleteScanController;
 use App\Http\Controllers\Api\ScanRequest\RequestRepoScanController;
 use App\Http\Controllers\Api\ScanRequest\GetPendingScanRequestsController;
 use App\Http\Controllers\Api\ScanRequest\GetScanRequestController;
-use App\Http\Controllers\Api\LLM\ExplainIssueController;
-use App\Http\Controllers\Api\LLM\GenerateFixController;
 use App\Http\Middleware\ApiTokenAuth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Auth\MeController;
 use App\Http\Controllers\Api\Dashboard\StatsController;
 use App\Http\Controllers\Api\PrComment\GetPrCommentsController;
+use App\Http\Controllers\Api\LLM\AskIssueController;
 
 // ─────────────────────────────────────────────
 // Route Publik (tidak butuh API Token)
@@ -47,6 +46,5 @@ Route::prefix('v1')->middleware(ApiTokenAuth::class)->group(function () {
     Route::get('/pr-comments/{id}', [GetPrCommentsController::class, 'show']);
 
     // LLM / AI
-    Route::post('/llm/explain',      ExplainIssueController::class);
-    Route::post('/llm/generate-fix', GenerateFixController::class);
+    Route::post('/llm/ask', AskIssueController::class);
 });
