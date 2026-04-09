@@ -1,0 +1,74 @@
+name: BEBAS Cloud Scan
+
+on:
+  push:
+    branches: [ "*" ]
+  pull_request:
+    branches: [ "*" ]
+
+jobs:
+  bebas_security_scan:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Run Engine & Format Data (MVP)
+      id: scanner
+      run: |
+        echo "Menjalankan pemindaian rahasia..."
+        ISSUES=$(grep -rnE "(API_KEY|password)\s*=" . || true)
+        
+        # Logika pembentukan data sesuai tabel 'scans'
+        if [ -n "$ISSUES" ]; then
+          echo "🚨 Ditemukan celah keamanan (Critical)!"
+          echo "total_critical=1" >> $GITHUB_ENV
+          echo "max_severity=critical" >> $GITHUB_ENV
+          echo "blocked=true" >> $GITHUB_ENV
+          
+          # Buat JSON array untuk kolom 'issues'
+          echo "issues_json=[{\"file\": \"unknown\", \"issue\": \"Secret Leakage\", \"severity\": \"critical\"}]" >> $GITHUB_ENV
+          
+          # Simpan status bash exit code untuk menggagalkan pipeline nanti
+          echo "EXIT_CODE=1" >> $GITHUB_ENV
+        else
+          echo "✅ Kode Aman!"
+          echo "total_critical=0" >> $GITHUB_ENV
+          echo "max_severity=none" >> $GITHUB_ENV
+          echo "blocked=false" >> $GITHUB_ENV
+          echo "issues_json=[]" >> $GITHUB_ENV
+          echo "EXIT_CODE=0" >> $GITHUB_ENV
+        fi
+
+        # Variabel statis untuk default info/warning (Bisa dikembangkan nanti)
+        echo "total_warning=0" >> $GITHUB_ENV
+        echo "total_info=0" >> $GITHUB_ENV
+
+    - name: Kirim Laporan ke API Laravel BEBAS
+      if: always() 
+      run: |
+        # Mengambil nomor PR jika trigger-nya adalah pull_request
+        PR_NUMBER="${{ github.event.pull_request.number }}"
+        if [ -z "$PR_NUMBER" ]; then PR_NUMBER="null"; fi
+
+        curl -X POST https://api-bebas-kamu.com/api/cicd/scans \
+        -H "Content-Type: application/json" \
+        -H "Accept: application/json" \
+        -d "{
+          \"repository\": \"${{ github.repository }}\",
+          \"branch\": \"${{ github.ref_name }}\",
+          \"commit_hash\": \"${{ github.sha }}\",
+          \"source\": \"github_action\",
+          \"pr_number\": $PR_NUMBER,
+          \"issues\": ${{ env.issues_json }},
+          \"total_critical\": ${{ env.total_critical }},
+          \"total_warning\": ${{ env.total_warning }},
+          \"total_info\": ${{ env.total_info }},
+          \"max_severity\": \"${{ env.max_severity }}\",
+          \"blocked\": ${{ env.blocked }}
+        }"
+
+    - name: Fail CI Pipeline jika ada Critical Issue
+      if: always()
+      run: exit ${{ env.EXIT_CODE }}
