@@ -276,10 +276,12 @@ def run_scan(files, mode='push'):
             continue
 
         try:
+            # Tambahkan errors='ignore' agar Python cuek kalau ketemu karakter aneh/file binary
             with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
                 content = f.read()
                 lines = content.splitlines()
-        except (OSError, IOError):
+        except (OSError, IOError, UnicodeDecodeError):
+            # Kalau tetap gagal dibaca, lewati saja filenya tanpa memunculkan error merah
             continue
 
         scanned_count += 1
