@@ -19,7 +19,7 @@ class StoreGithubPrScanController extends Controller
             'pr_number'   => 'required|integer',
             'branch'      => 'nullable|string',
             'commit_hash' => 'nullable|string',
-            'issues'      => 'required|array',
+            'issues'      => 'present|array',
         ]);
 
         if ($validator->fails()) {

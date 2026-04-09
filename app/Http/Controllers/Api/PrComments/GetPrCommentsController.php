@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\PrComment;
+namespace App\Http\Controllers\Api\PrComments;
 
 use App\Http\Controllers\Controller;
 use App\Models\PrComment;

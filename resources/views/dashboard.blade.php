@@ -37,6 +37,48 @@
     </div>
 </div>
 
+{{-- Setup Guide --}}
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mb-8">
+    <h2 class="font-semibold text-gray-900 mb-2">🚀 Setup Scanner di Project Lain</h2>
+    <p class="text-xs text-gray-500 mb-4">Ikuti langkah berikut untuk menjalankan scanner di project manapun</p>
+
+    <div class="space-y-3">
+        {{-- Step 1: Download --}}
+        <div class="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+            <span class="bg-indigo-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shrink-0 mt-0.5">1</span>
+            <div class="flex-1">
+                <p class="text-sm font-medium text-gray-900">Download scanner.py ke folder project Anda</p>
+                <div class="mt-2 flex flex-wrap gap-2">
+                    <a href="/scanner/download" class="inline-flex items-center bg-indigo-600 text-white px-4 py-1.5 rounded-lg text-xs font-medium hover:bg-indigo-700 transition">
+                        ⬇ Download scanner.py
+                    </a>
+                    <span class="text-xs text-gray-400 self-center">atau via PowerShell:</span>
+                </div>
+                <code id="cmd-download" class="block bg-gray-900 text-green-400 text-xs px-3 py-2 rounded-lg font-mono mt-2 overflow-x-auto cursor-pointer hover:bg-gray-800 transition" onclick="copyCmd(this)">Invoke-WebRequest -Uri http://localhost:8000/scanner/download -OutFile scanner.py</code>
+            </div>
+        </div>
+
+        {{-- Step 2: Install Hooks --}}
+        <div class="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+            <span class="bg-indigo-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shrink-0 mt-0.5">2</span>
+            <div class="flex-1">
+                <p class="text-sm font-medium text-gray-900">Pasang Penjaga Otomatis (Git Hooks)</p>
+                <p class="text-xs text-gray-500 mt-1">Sistem akan otomatis meminta Token Anda (paste dari kotak atas) dan menciptakan file <code class="bg-gray-200 px-1 rounded">.bebas</code>.</p>
+                <code class="block bg-gray-900 text-green-400 text-xs px-3 py-2 rounded-lg font-mono mt-2 overflow-x-auto cursor-pointer hover:bg-gray-800 transition" onclick="copyCmd(this)">python scanner.py --setup-hooks</code>
+            </div>
+        </div>
+
+        {{-- Step 3: Selesai --}}
+        <div class="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+            <span class="bg-indigo-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shrink-0 mt-0.5">3</span>
+            <div class="flex-1">
+                <p class="text-sm font-medium text-gray-900">Selesai! Lakukan <i>Git Commit</i></p>
+                <p class="text-xs text-gray-500 mt-1">Scanner akan tertanam dan langsung aktif otomatis menolak kode bocor setiap kali Anda menyimpan git commit.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
 {{-- Recent Scans --}}
 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
     <div class="flex items-center justify-between mb-4">

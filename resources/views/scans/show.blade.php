@@ -134,7 +134,8 @@ document.getElementById('chat-form').addEventListener('submit', async (e) => {
         appendChat('ai', data.answer);
         chatHistory = data.history || [];
     } else {
-        appendChat('ai', 'Gagal mendapatkan jawaban dari AI. Coba lagi.');
+        const errorMsg = data && data.message ? data.message : 'Gagal mendapatkan jawaban dari AI. Coba lagi.';
+        appendChat('ai', `**[Backend Error]** ${errorMsg}`);
     }
 
     btn.disabled = false;

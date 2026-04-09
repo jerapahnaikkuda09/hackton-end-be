@@ -30,9 +30,16 @@ class RequestRepoScanController extends Controller
             ->latest()
             ->first();
 
+        if (!$lastScan) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Repository ini tidak terdaftar di sistem kami atau belum memiliki pemilik.',
+            ], 403);
+        }
+
         $scanRequest = ScanRequest::create([
             'requester_user_id' => auth()->id(),
-            'owner_user_id'     => $lastScan?->user_id,
+            'owner_user_id'     => $lastScan->user_id,
             'repo_url'          => $request->repo_url,
             'status'            => 'pending',
         ]);
@@ -42,7 +49,7 @@ class RequestRepoScanController extends Controller
             'scan_request_id'  => $scanRequest->id,
             'repo_url'         => $scanRequest->repo_url,
             'status'           => $scanRequest->status,
-            'owner_found'      => $lastScan !== null,
+            'owner_found'      => true,
         ], 201);
     }
 }

@@ -19,7 +19,7 @@ class StoreLocalScanController extends Controller
             'scan_request_id' => 'nullable|integer|exists:scan_requests,id',
             'branch'          => 'nullable|string|max:255',
             'commit_hash'     => 'nullable|string|max:255',
-            'issues'          => 'required|array',
+            'issues'          => 'present|array',
             'issues.*.file'     => 'required|string',
             'issues.*.line'     => 'nullable|integer',
             'issues.*.severity' => 'required|in:info,warning,critical',

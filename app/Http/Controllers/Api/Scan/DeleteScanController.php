@@ -10,7 +10,7 @@ class DeleteScanController extends Controller
 {
     public function __invoke(string $id): JsonResponse
     {
-        $scan = Scan::findOrFail($id);
+        $scan = Scan::where('user_id', auth()->id())->findOrFail($id);
         $scan->delete();
         return response()->json(['success' => true]);
     }

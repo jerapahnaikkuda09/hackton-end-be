@@ -14,10 +14,10 @@ class AskIssueController extends Controller
     public function __invoke(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'scan_id'        => 'required|exists:scans,id',
-            'question'       => 'required|string|max:1000',
-            'issue_index'    => 'nullable|integer|min:0',
-            'history'        => 'nullable|array',
+            'scan_id' => 'required|exists:scans,id',
+            'question' => 'required|string|max:1000',
+            'issue_index' => 'nullable|integer|min:0',
+            'history' => 'nullable|array',
             'history.*.role' => 'required_with:history|in:user,model',
             'history.*.text' => 'required_with:history|string',
         ]);
@@ -26,7 +26,7 @@ class AskIssueController extends Controller
             return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
 
-        $scan   = Scan::findOrFail($request->scan_id);
+        $scan = Scan::findOrFail($request->scan_id);
         $issues = $scan->issues ?? [];
 
         // Konteks: spesifik 1 issue atau semua (max 10)
@@ -35,23 +35,26 @@ class AskIssueController extends Controller
             : array_slice($issues, 0, 10);
 
         $systemContext = $this->buildSystemContext($scan, $contextIssues);
-        $contents      = $this->buildContents($systemContext, $request->history ?? [], $request->question);
-        $answer        = $this->callGemini($contents);
+        $contents = $this->buildContents($request->history ?? [], $request->question);
 
-        if ($answer === null) {
-            return response()->json(['success' => false, 'message' => 'Gagal menghubungi Gemini AI.'], 503);
+        try {
+            $answer = $this->callGemini($systemContext, $contents);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memproses dengan AI: ' . $e->getMessage()
+            ], 503);
         }
 
         return response()->json([
-            'success'  => true,
-            'scan_id'  => $scan->id,
+            'success' => true,
+            'scan_id' => $scan->id,
             'question' => $request->question,
-            'answer'   => $answer,
-            // Dikembalikan ke frontend agar bisa lanjut multi-turn
-            'history'  => array_merge(
+            'answer' => $answer,
+            'history' => array_merge(
                 $request->history ?? [],
                 [
-                    ['role' => 'user',  'text' => $request->question],
+                    ['role' => 'user', 'text' => $request->question],
                     ['role' => 'model', 'text' => $answer],
                 ]
             ),
@@ -84,40 +87,64 @@ class AskIssueController extends Controller
         CONTEXT;
     }
 
-    private function buildContents(string $systemContext, array $history, string $question): array
+    /**
+     * Membangun array contents untuk Gemini API
+     */
+    private function buildContents(array $history, string $question): array
     {
-        // Injeksi konteks sebagai turn pertama
-        $contents = [
-            ['role' => 'user',  'parts' => [['text' => $systemContext]]],
-            ['role' => 'model', 'parts' => [['text' => 'Siap membantu menganalisis scan ini.']]],
-        ];
+        $contents = [];
 
         // Riwayat percakapan sebelumnya
         foreach ($history as $msg) {
-            $contents[] = ['role' => $msg['role'], 'parts' => [['text' => $msg['text']]]];
+            $role = $msg['role'] === 'model' ? 'model' : 'user';
+            $contents[] = [
+                'role' => $role,
+                'parts' => [['text' => $msg['text']]]
+            ];
         }
 
         // Pertanyaan terbaru
-        $contents[] = ['role' => 'user', 'parts' => [['text' => $question]]];
+        $contents[] = [
+            'role' => 'user',
+            'parts' => [['text' => $question]]
+        ];
 
         return $contents;
     }
 
-    private function callGemini(array $contents): ?string
+    /**
+     * Memanggil API Gemini langsung (menggunakan GEMINI_API_KEY yang sudah ada)
+     */
+    private function callGemini(string $systemContext, array $contents): string
     {
-        $apiKey = config('services.gemini.key');
-        if (!$apiKey) return null;
+        $apiKey = env('GEMINI_API_KEY');
+        if (!$apiKey) {
+            throw new \Exception('GEMINI_API_KEY tidak dikonfigurasi di file .env server Anda.');
+        }
 
-        $response = Http::timeout(30)->post(
-            "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={$apiKey}",
-            [
-                'contents'         => $contents,
-                'generationConfig' => ['temperature' => 0.4, 'maxOutputTokens' => 2048],
-            ]
-        );
+        $response = Http::timeout(60)
+            ->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key={$apiKey}", [
+                'system_instruction' => [
+                    'parts' => [['text' => $systemContext]]
+                ],
+                'contents' => $contents,
+                'generationConfig' => [
+                    'temperature' => 0.4,
+                    'maxOutputTokens' => 2048,
+                ]
+            ]);
 
-        return $response->successful()
-            ? data_get($response->json(), 'candidates.0.content.parts.0.text')
-            : null;
+        if (!$response->successful()) {
+            $errorMsg = data_get($response->json(), 'error.message', 'Unknown error dari API Gemini');
+            throw new \Exception($errorMsg);
+        }
+
+        $text = data_get($response->json(), 'candidates.0.content.parts.0.text');
+
+        if ($text === null) {
+            throw new \Exception('Respon tidak valid dari API Gemini');
+        }
+
+        return $text;
     }
 }

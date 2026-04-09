@@ -12,7 +12,7 @@ use App\Http\Middleware\ApiTokenAuth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Auth\MeController;
 use App\Http\Controllers\Api\Dashboard\StatsController;
-use App\Http\Controllers\Api\PrComment\GetPrCommentsController;
+use App\Http\Controllers\Api\PrComments\GetPrCommentsController;
 use App\Http\Controllers\Api\LLM\AskIssueController;
 
 // ─────────────────────────────────────────────
@@ -20,7 +20,7 @@ use App\Http\Controllers\Api\LLM\AskIssueController;
 // ─────────────────────────────────────────────
 Route::prefix('v1/auth')->group(function () {
     Route::post('/register', RegisterController::class);
-    Route::post('/login',    LoginController::class);
+    Route::post('/login', LoginController::class);
 });
 
 // ─────────────────────────────────────────────
@@ -28,21 +28,21 @@ Route::prefix('v1/auth')->group(function () {
 // ─────────────────────────────────────────────
 Route::prefix('v1')->middleware(ApiTokenAuth::class)->group(function () {
     // Scan
-    Route::post('/scans',         StoreLocalScanController::class);
-    Route::post('/scans/github',  StoreGithubPrScanController::class);
-    Route::get('/scans',          [GetScansController::class, 'index']);
-    Route::get('/scans/{id}',     [GetScansController::class, 'show']);
-    Route::delete('/scans/{id}',  DeleteScanController::class);
+    Route::post('/scans', StoreLocalScanController::class);
+    Route::post('/scans/github', StoreGithubPrScanController::class);
+    Route::get('/scans', [GetScansController::class, 'index']);
+    Route::get('/scans/{id}', [GetScansController::class, 'show']);
+    Route::delete('/scans/{id}', DeleteScanController::class);
 
     // Scan Requests (sinkronisasi repo user lain via URL)
-    Route::post('/scan-requests',          RequestRepoScanController::class);
-    Route::get('/scan-requests/pending',   GetPendingScanRequestsController::class);
-    Route::get('/scan-requests/{id}',      GetScanRequestController::class);
+    Route::post('/scan-requests', RequestRepoScanController::class);
+    Route::get('/scan-requests/pending', GetPendingScanRequestsController::class);
+    Route::get('/scan-requests/{id}', GetScanRequestController::class);
 
     // User & Dashboard
-    Route::get('/auth/me',          MeController::class);
-    Route::get('/dashboard/stats',  StatsController::class);
-    Route::get('/pr-comments',      [GetPrCommentsController::class, 'index']);
+    Route::get('/auth/me', MeController::class);
+    Route::get('/dashboard/stats', StatsController::class);
+    Route::get('/pr-comments', [GetPrCommentsController::class, 'index']);
     Route::get('/pr-comments/{id}', [GetPrCommentsController::class, 'show']);
 
     // LLM / AI
