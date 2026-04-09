@@ -21,7 +21,8 @@ FROM php:8.3-fpm-alpine
 RUN apk add --no-cache \
         nginx supervisor curl \
         libpng-dev libzip-dev oniguruma-dev icu-dev \
-    && docker-php-ext-install pdo_mysql mbstring zip bcmath intl opcache \
+        libpq-dev \
+    && docker-php-ext-install pdo_pgsql mbstring zip bcmath intl opcache \
     && rm -rf /var/cache/apk/*
 
 # OPcache production tuning
