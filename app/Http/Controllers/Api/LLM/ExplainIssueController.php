@@ -65,21 +65,21 @@ class ExplainIssueController extends Controller
             : "Jelaskan masalah ini dan berikan rekomendasi perbaikannya.";
 
         return <<<PROMPT
-Kamu adalah asisten keamanan kode yang membantu developer memperbaiki masalah pada kode mereka.
+                Kamu adalah asisten keamanan kode yang membantu developer memperbaiki masalah pada kode mereka.
 
-Berikut adalah hasil scan kode dari repository "{$scan->repository}" branch "{$scan->branch}":
-{$issueText}
+                Berikut adalah hasil scan kode dari repository "{$scan->repository}" branch "{$scan->branch}":
+                {$issueText}
 
-{$question}
+                {$question}
 
-Berikan penjelasan dalam bahasa Indonesia yang mudah dipahami, sertakan:
-1. Penjelasan singkat mengapa ini berbahaya atau bermasalah
-2. Contoh kode yang salah (jika relevan)
-3. Cara memperbaikinya dengan contoh kode yang benar
-4. Tips pencegahan ke depannya
+                Berikan penjelasan dalam bahasa Indonesia yang mudah dipahami, sertakan:
+                1. Penjelasan singkat mengapa ini berbahaya atau bermasalah
+                2. Contoh kode yang salah (jika relevan)
+                3. Cara memperbaikinya dengan contoh kode yang benar
+                4. Tips pencegahan ke depannya
 
-Format jawaban dengan rapi menggunakan markdown.
-PROMPT;
+                Format jawaban dengan rapi menggunakan markdown.
+                PROMPT;
     }
 
     private function callGemini(string $prompt): ?string

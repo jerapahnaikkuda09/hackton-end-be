@@ -11,7 +11,7 @@ class GetScansController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = Scan::query()->latest();
+        $query = Scan::query()->where('user_id', auth()->id())->latest();
 
         if ($request->has('source')) {
             $query->where('source', $request->source);
@@ -28,7 +28,10 @@ class GetScansController extends Controller
 
     public function show(string $id): JsonResponse
     {
-        $scan = Scan::with('prComments')->findOrFail($id);
+        $scan = Scan::with('prComments')
+            ->where('user_id', auth()->id())
+            ->findOrFail($id);
+
         return response()->json($scan);
     }
 }

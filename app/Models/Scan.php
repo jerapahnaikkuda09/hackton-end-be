@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Scan extends Model
 {
     protected $fillable = [
+        'user_id',
         'repository',
         'branch',
         'commit_hash',

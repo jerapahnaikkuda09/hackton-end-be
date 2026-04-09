@@ -46,6 +46,7 @@ class StoreLocalScanController extends Controller
         }
 
         $scan = Scan::create([
+            'user_id'        => auth()->id(),
             'repository'     => $request->repository,
             'branch'         => $request->branch,
             'commit_hash'    => $request->commit_hash,
