@@ -5,6 +5,9 @@ use App\Http\Controllers\Api\Scan\StoreLocalScanController;
 use App\Http\Controllers\Api\Scan\StoreGithubPrScanController;
 use App\Http\Controllers\Api\Scan\GetScansController;
 use App\Http\Controllers\Api\Scan\DeleteScanController;
+use App\Http\Controllers\Api\ScanRequest\RequestRepoScanController;
+use App\Http\Controllers\Api\ScanRequest\GetPendingScanRequestsController;
+use App\Http\Controllers\Api\ScanRequest\GetScanRequestController;
 use App\Http\Controllers\Api\LLM\ExplainIssueController;
 use App\Http\Controllers\Api\LLM\GenerateFixController;
 use App\Http\Middleware\ApiTokenAuth;
@@ -31,6 +34,11 @@ Route::prefix('v1')->middleware(ApiTokenAuth::class)->group(function () {
     Route::get('/scans',          [GetScansController::class, 'index']);
     Route::get('/scans/{id}',     [GetScansController::class, 'show']);
     Route::delete('/scans/{id}',  DeleteScanController::class);
+
+    // Scan Requests (sinkronisasi repo user lain via URL)
+    Route::post('/scan-requests',          RequestRepoScanController::class);
+    Route::get('/scan-requests/pending',   GetPendingScanRequestsController::class);
+    Route::get('/scan-requests/{id}',      GetScanRequestController::class);
 
     // User & Dashboard
     Route::get('/auth/me',          MeController::class);
