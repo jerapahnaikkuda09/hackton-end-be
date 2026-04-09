@@ -36,21 +36,28 @@ IGNORED_DIRS = {
 # ─────────────────────────────────────────────────────────────────────────────
 
 def run_gitleaks_on_files(files):
-    """Menjalankan Gitleaks dan mengembalikan daftar isu rahasia (secrets)."""
+    """Menjalankan Gitleaks lokal dan mengembalikan daftar isu rahasia."""
     issues = []
     
-    # Path file sementara untuk hasil gitleaks
+    # Deteksi lokasi folder scanner.py secara otomatis
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    # Tembak langsung ke folder bin/gitleaks.exe
+    gitleaks_path = os.path.join(current_dir, 'bin', 'gitleaks.exe')
+    
     report_file = "gitleaks_report_temp.json"
     
-    # Pastikan file report lama tidak ada
     if os.path.exists(report_file):
         os.remove(report_file)
         
+    # Cek apakah file .exe benar-benar ada di situ
+    if not os.path.exists(gitleaks_path):
+        print(f"[WARNING] Mesin Gitleaks tidak ditemukan di: {gitleaks_path}")
+        return issues
+
     try:
-        # Menjalankan gitleaks untuk mendeteksi rahasia (tanpa history git, full repo)
-        # Akan membutuhkan waktu beberapa milidetik - detik tergantung ukuran repo (yang bukan vendor)
+        # Jalankan Gitleaks menggunakan path absolut yang baru kita buat
         subprocess.run(
-            ['gitleaks', 'detect', '--no-git', '--report-path', report_file, '--report-format', 'json', '--exit-code', '0'],
+            [gitleaks_path, 'detect', '--no-git', '--report-path', report_file, '--report-format', 'json', '--exit-code', '0'],
             capture_output=True, text=True
         )
         
