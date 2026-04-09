@@ -94,9 +94,24 @@ def run_gitleaks_on_files(files):
 # ─────────────────────────────────────────────────────────────────────────────
 
 CODE_SMELL_PATTERNS = [
-    {
+{
         'name': 'Debug Statement (var_dump)',
         'pattern': r'\bvar_dump\s*\(',
+        'severity': 'critical', # Ubah ke critical agar otomatis memblokir push
+    },
+    {
+        'name': 'Empty Catch Block (Analisis Statis)',
+        'pattern': r'catch\s*\(\s*\\?Exception\s+\$\w+\s*\)\s*\{\s*\}',
+        'severity': 'warning',
+    },
+    {
+        'name': 'Hardcoded Credentials (Linting)',
+        'pattern': r'(?i)(password|passwd|secret|api_key|token)\s*[:=]\s*["\'][^"\']{5,}["\']',
+        'severity': 'critical',
+    },
+    {
+        'name': 'PHP die/exit hardcoded',
+        'pattern': r'(?<!\w)(die|exit)\s*\(\s*["\'][^"\']*["\']\s*\)',
         'severity': 'warning',
     },
     {

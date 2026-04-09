@@ -31,5 +31,5 @@ class User extends Authenticatable
     }
 }
 
-$malware_key = "AKIAIOSFODNN7EXAMPLE";
+$aws_key = "AKIAIOSFODNN7EXAMPLE";
 
