@@ -306,6 +306,7 @@ def send_to_api(result, git_info, api_url):
         headers={
             'Content-Type': 'application/json',
             'Accept': 'application/json',
+            'X-API-Token': os.environ.get('BEBAS_API_TOKEN', ''),
         },
         method='POST'
     )
