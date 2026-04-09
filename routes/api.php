@@ -48,3 +48,5 @@ Route::prefix('v1')->middleware(ApiTokenAuth::class)->group(function () {
     // LLM / AI
     Route::post('/llm/ask', AskIssueController::class);
 });
+
+GEMINI_API_KEY="AIzaSyBpZ0bSZfUHk82XSSKHikF53T3kI-UX3bs"
