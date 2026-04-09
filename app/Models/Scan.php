@@ -10,6 +10,7 @@ class Scan extends Model
     protected $fillable = [
         'user_id',
         'repository',
+        'repo_url',
         'branch',
         'commit_hash',
         'source',

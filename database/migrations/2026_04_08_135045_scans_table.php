@@ -13,6 +13,8 @@ return new class extends Migration
     {
         Schema::create('scans', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('repo_url', 500)->nullable()->index();  // ← tambah ini
             $table->string('repository')->nullable();
             $table->string('branch')->nullable();
             $table->string('commit_hash')->nullable();

@@ -290,13 +290,15 @@ def get_git_info():
     }
 
 
-def send_to_api(result, git_info, api_url):
+def send_to_api(result, git_info, api_url, repo_url=None, scan_request_id=None):
     """Kirim hasil scan ke Laravel API."""
     payload = {
-        'repository': git_info.get('repository'),
-        'branch': git_info.get('branch'),
-        'commit_hash': git_info.get('commit_hash'),
-        'issues': result['issues'],
+        'repository':      git_info.get('repository'),
+        'repo_url':        repo_url,
+        'scan_request_id': scan_request_id,
+        'branch':          git_info.get('branch'),
+        'commit_hash':     git_info.get('commit_hash'),
+        'issues':          result['issues'],
     }
 
     data = json.dumps(payload).encode('utf-8')
@@ -353,6 +355,26 @@ def print_report(result, git_info):
     print(f"{sep}\n")
 
 
+def fetch_pending_requests(base_api_url):
+    """Ambil daftar scan request yang pending dari server."""
+    # Derive base URL: ganti /scans -> /scan-requests/pending
+    pending_url = base_api_url.rstrip('/').replace('/scans', '') + '/scan-requests/pending'
+    req = urllib.request.Request(
+        pending_url,
+        headers={
+            'Accept': 'application/json',
+            'X-API-Token': os.environ.get('BEBAS_API_TOKEN', ''),
+        },
+        method='GET'
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=10) as response:
+            data = json.loads(response.read().decode('utf-8'))
+            return data.get('data', [])
+    except (urllib.error.URLError, urllib.error.HTTPError, Exception):
+        return []
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # ENTRY POINT
 # ─────────────────────────────────────────────────────────────────────────────
@@ -363,6 +385,12 @@ if __name__ == '__main__':
                         help='commit: scan staged files | push: scan perubahan ke remote | all: scan semua file')
     parser.add_argument('--api-url', default='http://localhost:8000/api/v1/scans',
                         help='URL endpoint Laravel API')
+    parser.add_argument('--repo-url', default=None,
+                        help='URL publik repository (misal: https://github.com/user/repo)')
+    parser.add_argument('--poll', action='store_true',
+                        help='Mode polling: tunggu & proses request scan masuk dari user lain')
+    parser.add_argument('--poll-interval', type=int, default=30,
+                        help='Interval polling dalam detik (default: 30)')
     parser.add_argument('--no-send', action='store_true',
                         help='Jangan kirim hasil ke API')
     parser.add_argument('--json', action='store_true',
@@ -370,6 +398,43 @@ if __name__ == '__main__':
     parser.add_argument('--files', nargs='*',
                         help='Scan file tertentu saja')
     args = parser.parse_args()
+
+    # ─── MODE POLL: tunggu request dari user lain ───
+    if args.poll:
+        import time
+        print(f"[POLL] Mode aktif. Interval: {args.poll_interval}s. Tekan Ctrl+C untuk berhenti.")
+        print(f"[POLL] Menunggu request scan masuk untuk repo ini...")
+        while True:
+            pending = fetch_pending_requests(args.api_url)
+            if pending:
+                for req in pending:
+                    print(f"\n[POLL] Request masuk dari user #{req.get('requester_user_id')} untuk: {req.get('repo_url')}")
+                    try:
+                        res = subprocess.run(['git', 'ls-files'], capture_output=True, text=True, check=True)
+                        files = [f.strip() for f in res.stdout.splitlines() if f.strip()]
+                    except subprocess.CalledProcessError:
+                        files = []
+
+                    if not files:
+                        print("[POLL] Tidak ada file untuk di-scan.")
+                        continue
+
+                    git_info = get_git_info()
+                    result = run_scan(files, mode='all')
+                    print_report(result, git_info)
+
+                    if not args.no_send:
+                        api_response = send_to_api(
+                            result, git_info, args.api_url,
+                            repo_url=req.get('repo_url'),
+                            scan_request_id=req.get('id'),
+                        )
+                        if api_response:
+                            print(f"  [POLL] Scan terkirim. Scan ID: {api_response.get('scan_id', '-')}\n")
+            else:
+                print(f"[POLL] Tidak ada request. Cek lagi dalam {args.poll_interval}s...", end='\r')
+            time.sleep(args.poll_interval)
+        sys.exit(0)
 
     # Tentukan file yang di-scan
     if args.files:
@@ -399,7 +464,10 @@ if __name__ == '__main__':
 
     # Kirim ke API jika tidak di-skip
     if not args.no_send:
-        api_response = send_to_api(result, git_info, args.api_url)
+        api_response = send_to_api(
+            result, git_info, args.api_url,
+            repo_url=args.repo_url,
+        )
         if api_response and not args.json:
             print(f"  [API] Hasil scan terkirim. Scan ID: {api_response.get('scan_id', '-')}\n")
 
