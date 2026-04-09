@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-"""
-BEBAS Code Scanner - Core Engine
-Mendeteksi secret, conflict marker, dan pola berbahaya sebelum kode di-push ke GitHub.
-"""
 
 import os
 import re
