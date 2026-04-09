@@ -101,10 +101,20 @@ def run_gitleaks_on_files(files):
 # ─────────────────────────────────────────────────────────────────────────────
 
 CODE_SMELL_PATTERNS = [
-{
+    {
         'name': 'Debug Statement (var_dump)',
         'pattern': r'\bvar_dump\s*\(',
         'severity': 'critical', # Ubah ke critical agar otomatis memblokir push
+    },
+{
+        'name': 'AWS Access Key (Security Risk)',
+        'pattern': r'AKIA[0-9A-Z]{16}', # Pola standar AWS Access Key
+        'severity': 'critical',         # Severity CRITICAL agar otomatis memblokir push
+    },
+    {
+        'name': 'Sensitive Keyword (AWS Secret)',
+        'pattern': r'\$aws_key\s*=', 
+        'severity': 'critical',
     },
     {
         'name': 'Empty Catch Block (Analisis Statis)',
