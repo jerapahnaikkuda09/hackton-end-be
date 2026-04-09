@@ -41,7 +41,19 @@ def run_gitleaks_on_files(files, target_dir='.', mode='push'):
     # Pastikan file report lama tidak ada
     if os.path.exists(report_file):
         os.remove(report_file)
-        
+
+    # Dapatkan daftar file yang di-ignore oleh git (agar tidak false-positive pada .env)
+    gitignored_files = set()
+    try:
+        res = subprocess.run(
+            ['git', 'ls-files', '--others', '--ignored', '--exclude-standard'],
+            capture_output=True, text=True, cwd=target_dir
+        )
+        if res.returncode == 0:
+            gitignored_files = {f.strip().replace('\\', '/') for f in res.stdout.splitlines() if f.strip()}
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        pass
+
     try:
         # Menjalankan gitleaks untuk mendeteksi rahasia (tanpa history git, full repo)
         subprocess.run(
@@ -68,7 +80,17 @@ def run_gitleaks_on_files(files, target_dir='.', mode='push'):
                 leak_file = leak.get('File', '').replace('\\', '/')
                 basename = os.path.basename(leak_file)
                 
-                # Masukkan jika: mode=all, ATAU file ada di daftar, ATAU file adalah .env
+                # Normalisasi path relatif untuk pencocokan gitignore
+                leak_relative = leak_file
+                target_prefix = target_dir.replace('\\', '/').rstrip('/') + '/'
+                if leak_relative.startswith(target_prefix):
+                    leak_relative = leak_relative[len(target_prefix):]
+                
+                # Skip file yang ada di .gitignore (seperti .env) — file ini tidak akan ter-commit
+                if leak_relative in gitignored_files:
+                    continue
+                
+                # Masukkan jika: mode=all, ATAU file ada di daftar, ATAU file .env yang DI-TRACK git
                 if mode == 'all' or leak_file in normalized_files or basename.startswith('.env'):
                     secret_censored = leak.get('Secret', '')
                     secret_censored = secret_censored[:20] + '...' if len(secret_censored) > 20 else secret_censored
@@ -689,17 +711,27 @@ Contoh penggunaan:
             os.environ['BEBAS_API_TOKEN'] = file_token
         else:
             if sys.stdin.isatty():
-                print(f"\n[INFO] Sistem mendeteksi project baru (Token belum disetel di {target_dir}).")
-                user_token = input("🔑 Silakan paste BEBAS_API_TOKEN Anda di sini: ").strip()
-                if user_token:
-                    bebas_file_path = os.path.join(target_dir, '.bebas')
-                    with open(bebas_file_path, 'w') as f:
-                        f.write(f"BEBAS_API_TOKEN={user_token}\n")
-                    os.environ['BEBAS_API_TOKEN'] = user_token
-                    print(f"✅ [SUCCESS] Token berhasil diamankan di file {bebas_file_path}!\n")
-                else:
-                    print("[ERROR] Token tidak boleh kosong!")
-                    sys.exit(1)
+                try:
+                    print(f"\n[INFO] Sistem mendeteksi project baru (Token belum disetel di {target_dir}).")
+                    user_token = input("[KEY] Silakan paste BEBAS_API_TOKEN Anda di sini: ").strip()
+                    if user_token:
+                        bebas_file_path = os.path.join(target_dir, '.bebas')
+                        with open(bebas_file_path, 'w') as f:
+                            f.write(f"BEBAS_API_TOKEN={user_token}\n")
+                        os.environ['BEBAS_API_TOKEN'] = user_token
+                        print(f"✅ [SUCCESS] Token berhasil diamankan di file {bebas_file_path}!\n")
+                    else:
+                        print("[ERROR] Token tidak boleh kosong!")
+                        sys.exit(1)
+                except (EOFError, UnicodeEncodeError):
+                    # Git hooks tidak bisa menerima input interaktif.
+                    # Lanjutkan scan tanpa kirim ke API.
+                    print("\n[WARNING] Tidak bisa menerima input (dalam mode git hook).")
+                    print("          Scan tetap berjalan secara lokal (tanpa kirim ke API).")
+                    print("          Untuk mengatur token, jalankan manual:")
+                    print(f"          python \"{os.path.abspath(__file__)}\" --setup")
+                    print(f"          atau buat file .bebas di {target_dir} berisi: BEBAS_API_TOKEN=token_anda\n")
+                    args.no_send = True
             else:
                 print("[ERROR] BEBAS_API_TOKEN tidak ditemukan (Coba sertakan file .bebas atau flag --token).")
                 sys.exit(1)
