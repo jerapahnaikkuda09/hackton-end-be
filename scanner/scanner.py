@@ -318,34 +318,6 @@ def get_git_info(target_dir='.'):
         'commit_hash': run(['git', 'rev-parse', 'HEAD']),
     }
 
-import time
-
-# Misalkan ini adalah fungsi di sekitar scanner.py baris 307
-def panggil_ai_dengan_retry():
-    max_retries = 3
-    
-    for attempt in range(max_retries):
-        try:
-            # --- MASUKKAN KODE ASLI ANDA DI BARIS 307 DI SINI ---
-            # Contoh: response = model.generate_content(prompt)
-            # return response
-            pass
-            
-        except Exception as e:
-            error_msg = str(e).lower()
-            # Cek apakah error disebabkan oleh server sibuk (High Demand / Rate Limit)
-            if "high demand" in error_msg or "429" in error_msg or "503" in error_msg:
-                jeda_waktu = 2 ** attempt  # Akan menunggu 1 detik, lalu 2 detik, lalu 4 detik
-                print(f"[Peringatan] Server AI sibuk. Mencoba lagi dalam {jeda_waktu} detik... (Percobaan {attempt + 1}/{max_retries})")
-                time.sleep(jeda_waktu)
-            else:
-                # Jika errornya bukan karena server sibuk (misal: salah API key), lemparkan errornya
-                raise e
-                
-    # Jika sudah mencoba 3 kali dan tetap gagal
-    print("[Error] Gagal menghubungi AI setelah beberapa kali percobaan.")
-    return None
-
 def send_to_api(result, git_info, api_url, repo_url=None, scan_request_id=None):
     """Kirim hasil scan ke Laravel API."""
     token = os.environ.get('BEBAS_API_TOKEN', '')
