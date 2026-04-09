@@ -106,7 +106,7 @@ CODE_SMELL_PATTERNS = [
         'pattern': r'\bvar_dump\s*\(',
         'severity': 'critical', # Ubah ke critical agar otomatis memblokir push
     },
-{
+    {
         'name': 'AWS Access Key (Security Risk)',
         'pattern': r'AKIA[0-9A-Z]{16}', # Pola standar AWS Access Key
         'severity': 'critical',         # Severity CRITICAL agar otomatis memblokir push

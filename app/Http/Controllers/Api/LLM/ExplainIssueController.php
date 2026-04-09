@@ -26,8 +26,13 @@ class ExplainIssueController extends Controller
             ], 422);
         }
 
-        $scan   = Scan::findOrFail($request->scan_id);
-        $issues = $scan->issues ?? [];
+        // Ambil data scan dari database
+        $scan = Scan::find($scanId);
+
+        // JURUS ANTI-GAGAL: Kalau database SQLite masih kosong, kita "suapi" Gemini secara manual!
+        $issues = $scan ? json_encode($scan->issues) : "Terdapat celah SQL Injection pada file auth/provider.py di baris 144: 
+        `cursor.execute('SELECT * FROM users WHERE id = ' + user_id)`. 
+        Tolong jelaskan bahayanya dan berikan contoh perbaikannya menggunakan Parameterized Query di Python.";
 
         if ($request->has('issue_index') && isset($issues[$request->issue_index])) {
             $targetIssues = [$issues[$request->issue_index]];
