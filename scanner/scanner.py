@@ -733,8 +733,11 @@ Contoh penggunaan:
                     print(f"          atau buat file .bebas di {target_dir} berisi: BEBAS_API_TOKEN=token_anda\n")
                     args.no_send = True
             else:
-                print("[ERROR] BEBAS_API_TOKEN tidak ditemukan (Coba sertakan file .bebas atau flag --token).")
-                sys.exit(1)
+                # Non-interactive (git hook pre-push) — lanjutkan scan lokal tanpa kirim ke API
+                print("[WARNING] BEBAS_API_TOKEN tidak ditemukan (non-interactive mode).")
+                print("          Scan tetap berjalan secara lokal (tanpa kirim ke API).")
+                print("          Buat file .bebas di project berisi: BEBAS_API_TOKEN=token_anda\n")
+                args.no_send = True
 
     # ─── Setup Git Hooks Mode ───
     if args.setup_hooks:
